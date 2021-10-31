@@ -202,7 +202,7 @@ namespace Vanila
 
         // DELETE: api/Departments/5
         [HttpPost("DeleteData")]
-        public async Task<IActionResult> DeleteDepartment([FromBody] SelfClass1 input)
+        public async Task<ActionResult> DeleteDepartment([FromBody] SelfClass1 input)
         {
             if (input.DId == 0)
             {

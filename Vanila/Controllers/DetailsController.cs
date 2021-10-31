@@ -6,9 +6,15 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Vanila.Models;
+using Vanila.DTOs;
 
 namespace Vanila
 {
+    public class SelfClass2
+    {
+        public decimal? Id { get; set; }
+    }
+   
     [Route("api/[controller]")]
     [ApiController]
     public class DetailsController : ControllerBase
@@ -39,6 +45,25 @@ namespace Vanila
             }
 
             return detail;
+        }
+
+        [HttpPost("GetDname")]
+        public async Task<ActionResult<ResponseDto>> GetDname([FromBody] Detail input)
+        {
+            List<Detail> details = await _context.Details
+                                                            .OrderBy(e => e.Id)
+                                                            .ToListAsync();
+            if (details.Count <= 0)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
+                {
+                    Message = "Data is not found in the database!",
+                    Success = false,
+                    Payload = null
+                });
+            }
+
+            return Ok();
         }
 
         // PUT: api/Details/5
@@ -98,20 +123,52 @@ namespace Vanila
         }
 
         // DELETE: api/Details/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteDetail(decimal? id)
+        [HttpPost("DeleteData")]
+        public async Task<ActionResult> DeleteDepartment([FromBody] SelfClass2 input)
         {
-            var detail = await _context.Details.FindAsync(id);
-            if (detail == null)
+            if (input.Id == 0)
             {
-                return NotFound();
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseDto
+                {
+                    Message = "Please fill up the DID field",
+                    Success = false,
+                    Payload = null
+                });
+            }
+            var department = await _context.Departments.Where(i => i.DId == input.Id).FirstOrDefaultAsync();
+            if (department == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
+                {
+                    Message = "Data is not found",
+                    Success = false,
+                    Payload = null
+                });
             }
 
-            _context.Details.Remove(detail);
-            await _context.SaveChangesAsync();
+            _context.Departments.Remove(department);
+            bool isSaved = await _context.SaveChangesAsync() > 0;
 
-            return NoContent();
+            if (isSaved == false)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDto
+                {
+                    Message = "Data can't Delete because of Internal server Error",
+                    Success = false,
+                    Payload = null
+                });
+            }
+
+
+
+            return StatusCode(StatusCodes.Status200OK, new ResponseDto
+            {
+                Message = "Data Deleted",
+                Success = true,
+                Payload = null
+            });
         }
+
 
         private bool DetailExists(decimal? id)
         {
