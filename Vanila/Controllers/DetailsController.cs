@@ -14,7 +14,20 @@ namespace Vanila
     {
         public decimal? Id { get; set; }
     }
-   
+
+    public class SelfOutput 
+    {
+        public decimal? Id { get; set; }
+        public string Name { get; set; }
+        public string DName { get; set; }
+    }
+
+    public class SelfOutput2
+    {
+        public decimal? Id { get; set; }
+        public string Name { get; set; }
+    }
+
     [Route("api/[controller]")]
     [ApiController]
     public class DetailsController : ControllerBase
@@ -26,75 +39,174 @@ namespace Vanila
             _context = context;
         }
 
-        // GET: api/Details
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Detail>>> GetDetails()
+
+        [HttpGet("AllDetails")]
+        public async Task<ActionResult<ResponseDto>> GetAll()
         {
-            return await _context.Details.ToListAsync();
-        }
 
-        // GET: api/Details/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Detail>> GetDetail(decimal? id)
-        {
-            var detail = await _context.Details.FindAsync(id);
-
-            if (detail == null)
-            {
-                return NotFound();
-            }
-
-            return detail;
-        }
-
-        [HttpPost("GetDname")]
-        public async Task<ActionResult<ResponseDto>> GetDname([FromBody] Detail input)
-        {
-            List<Detail> details = await _context.Details
-                                                            .OrderBy(e => e.Id)
-                                                            .ToListAsync();
-            if (details.Count <= 0)
+            List<SelfOutput> selfOutputs =
+               await (from d in _context.Details
+                                           
+                      from de in _context.Departments
+                                           .Where(i => i.DId == d.DId)
+                      select new SelfOutput
+                      {
+                          Id = d.Id,
+                          Name = d.Name,
+                          DName = de.DName
+                      }).OrderBy(i => i.Id).ToListAsync();
+            if (selfOutputs == null)
             {
                 return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
+                {
+                    Message = "Data is not found",
+                    Success = false,
+                    Payload = null
+                });
+            }
+            return StatusCode(StatusCodes.Status200OK, new ResponseDto
+            {
+                Message = "Joining Done",
+                Success = true,
+                Payload = selfOutputs
+            });
+        }
+
+        [HttpPost("DetailsWithDepartmentNameSingle")]
+        public async Task<ActionResult<ResponseDto>> GetDname([FromBody] SelfClass2 input)
+        {
+
+            if (input.Id == 0)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseDto
                 {
                     Message = "Data is not found in the database!",
                     Success = false,
                     Payload = null
                 });
             }
-
-            return Ok();
+            List<SelfOutput> selfOutputs =
+                await (from d in _context.Details
+                                            .Where(i => i.Id == input.Id)
+                       from de in _context.Departments
+                                            .Where(i => i.DId == d.DId)
+                       select new SelfOutput
+                       {
+                           Id = d.Id,
+                           Name = d.Name,
+                           DName = de.DName
+                       }).OrderBy(i => i.Id).ToListAsync();
+            if (selfOutputs == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
+                {
+                    Message = "Data is not found",
+                    Success = false,
+                    Payload = null
+                });
+            }
+            return StatusCode(StatusCodes.Status200OK, new ResponseDto
+            {
+                Message = "Joining Done",
+                Success = true,
+                Payload = selfOutputs
+            });
         }
 
         // PUT: api/Details/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutDetail(decimal? id, Detail detail)
+        [HttpPost("UpdateDetails")]
+        public async Task<ActionResult<ResponseDto>> PutDetail([FromBody] Detail input)
         {
-            if (id != detail.Id)
+            if (input.Id == 0)
             {
-                return BadRequest();
-            }
-
-            _context.Entry(detail).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!DetailExists(id))
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseDto 
                 {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                    Message="Please FillUp ID field!",
+                    Success = false,
+                    Payload = null
+                });
             }
 
-            return NoContent();
+            var details = await _context.Details.Where(i => i.Id == input.Id).FirstOrDefaultAsync();
+            if (details == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
+                {
+                    Message = "Data is not found",
+                    Success = false,
+                    Payload = null
+                });
+            }
+
+            details.Name = input.Name;
+            details.DId = input.DId;
+
+            _context.Details.Update(details);
+
+            bool isSaved = await _context.SaveChangesAsync() > 0;
+            if (isSaved == false) 
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDto
+                {
+                    Message = "Internal Server Error!!",
+                    Success = false,
+                    Payload = null
+                }); ;
+            }
+            return StatusCode(StatusCodes.Status200OK, new ResponseDto
+            {
+                Message = "True",
+                Success = true,
+                Payload = null
+            }); ;
+        }
+
+        [HttpPost("UpdateName")]
+        public async Task<ActionResult<ResponseDto>> UpdateName([FromBody] SelfOutput2 input)
+        {
+            if (input.Id == 0)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseDto
+                {
+                    Message = "Please FillUp ID field!",
+                    Success = false,
+                    Payload = null
+                });
+            }
+
+            var details = await _context.Details.Where(i => i.Id == input.Id).FirstOrDefaultAsync();
+            if (details == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
+                {
+                    Message = "Data is not found",
+                    Success = false,
+                    Payload = null
+                });
+            }
+
+            details.Name = input.Name;
+            
+
+            _context.Details.Update(details);
+
+            bool isSaved = await _context.SaveChangesAsync() > 0;
+            if (isSaved == false)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDto
+                {
+                    Message = "Internal Server Error!!",
+                    Success = false,
+                    Payload = null
+                }); ;
+            }
+            return StatusCode(StatusCodes.Status200OK, new ResponseDto
+            {
+                Message = "True",
+                Success = true,
+                Payload = details.Name
+            }); ;
         }
 
         // POST: api/Details
@@ -124,7 +236,7 @@ namespace Vanila
 
         // DELETE: api/Details/5
         [HttpPost("DeleteData")]
-        public async Task<ActionResult> DeleteDepartment([FromBody] SelfClass2 input)
+        public async Task<ActionResult<ResponseDto>> DeleteDetails([FromBody] SelfClass2 input)
         {
             if (input.Id == 0)
             {
@@ -135,8 +247,8 @@ namespace Vanila
                     Payload = null
                 });
             }
-            var department = await _context.Departments.Where(i => i.DId == input.Id).FirstOrDefaultAsync();
-            if (department == null)
+            var detail = await _context.Details.Where(i => i.DId == input.Id).FirstOrDefaultAsync();
+            if (detail == null)
             {
                 return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
                 {
@@ -146,7 +258,7 @@ namespace Vanila
                 });
             }
 
-            _context.Departments.Remove(department);
+            _context.Details.Remove(detail);
             bool isSaved = await _context.SaveChangesAsync() > 0;
 
             if (isSaved == false)
@@ -176,3 +288,30 @@ namespace Vanila
         }
     }
 }
+
+
+
+// GET: api/Details
+//[HttpGet]
+//public async Task<ActionResult<ResponseDto>> GetDetails()
+//{
+//    List<Detail> details = await _context.Details
+//                                             .OrderBy(i => i.Id)
+//                                             .ToListAsync();
+//    if (details.Count <= 0)
+//    {
+//        return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
+//        {
+//            Message = "Data pacche nah",
+//            Success = false,
+//            Payload = null
+//        });
+//    }
+
+//    return StatusCode(StatusCodes.Status200OK, new ResponseDto
+//    {
+//        Message = "Data pacche ",
+//        Success = true,
+//        Payload = details
+//    });
+//}

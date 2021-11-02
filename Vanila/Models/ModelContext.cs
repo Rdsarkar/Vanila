@@ -58,7 +58,7 @@ namespace Vanila.Models
 
                 entity.Property(e => e.DId)
                     .HasColumnType("NUMBER(38)")
-                    .HasColumnName("D_ID");
+                    .HasColumnName("DID");
 
                 entity.Property(e => e.Id)
                     .HasColumnType("NUMBER(38)")
