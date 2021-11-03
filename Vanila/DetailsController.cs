@@ -28,7 +28,7 @@ namespace Vanila
         public string Name { get; set; }
     }
 
-   
+
 
     [Route("api/[controller]")]
     [ApiController]
@@ -209,8 +209,29 @@ namespace Vanila
             });
         }
 
-        
+        [HttpGet]
+        public async Task<ActionResult<ResponseDto>> GetDetails()
+        {
+            List<Detail> details = await _context.Details
+                                                     .OrderBy(i => i.Id)
+                                                     .ToListAsync();
+            if (details.Count <= 0)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
+                {
+                    Message = "Data pacche nah",
+                    Success = false,
+                    Payload = null
+                });
+            }
 
+            return StatusCode(StatusCodes.Status200OK, new ResponseDto
+            {
+                Message = "Data pacche ",
+                Success = true,
+                Payload = details
+            });
+        }
         private bool DetailExists(decimal? id)
         {
             return _context.Details.Any(e => e.Id == id);
