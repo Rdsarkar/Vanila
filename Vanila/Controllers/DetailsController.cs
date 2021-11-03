@@ -15,7 +15,7 @@ namespace Vanila
         public decimal? Id { get; set; }
     }
 
-    public class SelfOutput 
+    public class SelfOutput
     {
         public decimal? Id { get; set; }
         public string Name { get; set; }
@@ -28,6 +28,8 @@ namespace Vanila
         public string Name { get; set; }
     }
 
+   
+
     [Route("api/[controller]")]
     [ApiController]
     public class DetailsController : ControllerBase
@@ -39,14 +41,13 @@ namespace Vanila
             _context = context;
         }
 
-
         [HttpGet("AllDetails")]
         public async Task<ActionResult<ResponseDto>> GetAll()
         {
 
             List<SelfOutput> selfOutputs =
                await (from d in _context.Details
-                                           
+
                       from de in _context.Departments
                                            .Where(i => i.DId == d.DId)
                       select new SelfOutput
@@ -113,54 +114,6 @@ namespace Vanila
             });
         }
 
-        // PUT: api/Details/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost("UpdateDetails")]
-        public async Task<ActionResult<ResponseDto>> PutDetail([FromBody] Detail input)
-        {
-            if (input.Id == 0)
-            {
-                return StatusCode(StatusCodes.Status400BadRequest, new ResponseDto 
-                {
-                    Message="Please FillUp ID field!",
-                    Success = false,
-                    Payload = null
-                });
-            }
-
-            var details = await _context.Details.Where(i => i.Id == input.Id).FirstOrDefaultAsync();
-            if (details == null)
-            {
-                return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
-                {
-                    Message = "Data is not found",
-                    Success = false,
-                    Payload = null
-                });
-            }
-
-            details.Name = input.Name;
-            details.DId = input.DId;
-
-            _context.Details.Update(details);
-
-            bool isSaved = await _context.SaveChangesAsync() > 0;
-            if (isSaved == false) 
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDto
-                {
-                    Message = "Internal Server Error!!",
-                    Success = false,
-                    Payload = null
-                }); ;
-            }
-            return StatusCode(StatusCodes.Status200OK, new ResponseDto
-            {
-                Message = "True",
-                Success = true,
-                Payload = null
-            }); ;
-        }
 
         [HttpPost("UpdateName")]
         public async Task<ActionResult<ResponseDto>> UpdateName([FromBody] SelfOutput2 input)
@@ -187,7 +140,7 @@ namespace Vanila
             }
 
             details.Name = input.Name;
-            
+
 
             _context.Details.Update(details);
 
@@ -207,31 +160,6 @@ namespace Vanila
                 Success = true,
                 Payload = details.Name
             }); ;
-        }
-
-        // POST: api/Details
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Detail>> PostDetail(Detail detail)
-        {
-            _context.Details.Add(detail);
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (DetailExists(detail.Id))
-                {
-                    return Conflict();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return CreatedAtAction("GetDetail", new { id = detail.Id }, detail);
         }
 
         // DELETE: api/Details/5
@@ -281,6 +209,7 @@ namespace Vanila
             });
         }
 
+        
 
         private bool DetailExists(decimal? id)
         {
@@ -288,30 +217,3 @@ namespace Vanila
         }
     }
 }
-
-
-
-// GET: api/Details
-//[HttpGet]
-//public async Task<ActionResult<ResponseDto>> GetDetails()
-//{
-//    List<Detail> details = await _context.Details
-//                                             .OrderBy(i => i.Id)
-//                                             .ToListAsync();
-//    if (details.Count <= 0)
-//    {
-//        return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
-//        {
-//            Message = "Data pacche nah",
-//            Success = false,
-//            Payload = null
-//        });
-//    }
-
-//    return StatusCode(StatusCodes.Status200OK, new ResponseDto
-//    {
-//        Message = "Data pacche ",
-//        Success = true,
-//        Payload = details
-//    });
-//}
