@@ -232,6 +232,74 @@ namespace Vanila
                 Payload = details
             });
         }
+
+
+        [HttpPost("UpdateAllDetails")]
+        public async Task<ActionResult<ResponseDto>> UpdateAll([FromBody] Detail input)
+        {
+            if (input.Id == 0)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseDto
+                {
+                    Message = "Please FillUp ID field!",
+                    Success = false,
+                    Payload = null
+                });
+            }
+
+            if (input.Name == null)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseDto
+                {
+                    Message = "Please FillUp Name field!",
+                    Success = false,
+                    Payload = null
+                });
+            }
+
+            if (input.DId == 0)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseDto
+                {
+                    Message = "Please FillUp Depertment ID field!",
+                    Success = false,
+                    Payload = null
+                });
+            }
+
+            var details = await _context.Details.Where(i => i.Id == input.Id).FirstOrDefaultAsync();
+            if (details == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
+                {
+                    Message = "Data is not found",
+                    Success = false,
+                    Payload = null
+                });
+            }
+
+            details.DId = input.DId;
+            details.Name = input.Name;
+
+            _context.Details.Update(details);
+
+            bool isSaved = await _context.SaveChangesAsync() > 0;
+            if (isSaved == false)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDto
+                {
+                    Message = "Internal Server Error!!",
+                    Success = false,
+                    Payload = null
+                }); ;
+            }
+            return StatusCode(StatusCodes.Status200OK, new ResponseDto
+            {
+                Message = "True",
+                Success = true,
+                Payload = details
+            }); ;
+        }
         private bool DetailExists(decimal? id)
         {
             return _context.Details.Any(e => e.Id == id);
