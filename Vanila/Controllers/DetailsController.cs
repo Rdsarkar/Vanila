@@ -175,7 +175,7 @@ namespace Vanila
                     Payload = null
                 });
             }
-            var detail = await _context.Details.Where(i => i.DId == input.Id).FirstOrDefaultAsync();
+            var detail = await _context.Details.Where(i => i.Id == input.Id).FirstOrDefaultAsync();
             if (detail == null)
             {
                 return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
@@ -233,6 +233,66 @@ namespace Vanila
             });
         }
 
+        [HttpPost("CreateDetails")]
+        public async Task<ActionResult<ResponseDto>> CreateDetails([FromBody] Detail input)
+        {
+            if (input.Id == 0) 
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseDto
+                {
+                    Message = "Please Insert Id Field!",
+                    Success = false,
+                    Payload = null
+                });
+            }
+            if (input.Name == null)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseDto 
+                {
+                    Message = "please Fill UP Name Field!",
+                    Success = false,
+                    Payload =  null
+                });
+            }
+            if (input.DId == 0)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseDto
+                {
+                    Message = "please Fill UP DID Field!",
+                    Success = false,
+                    Payload = null
+                });
+            }
+
+            Detail details = await _context.Details.Where(i => i.Id == input.Id).FirstOrDefaultAsync();
+            if (details != null) 
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new ResponseDto
+                {
+                    Message = "please Fill UP DID Field!",
+                    Success = false,
+                    Payload = null
+                });
+            }
+            _context.Details.Add(input);
+            bool isSaved = await _context.SaveChangesAsync()>0;
+            if (isSaved == false) 
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseDto
+                {
+                    Message = "Server Error so cant be Insert data",
+                    Success = false,
+                    Payload = null
+                });
+            }
+
+            return StatusCode(StatusCodes.Status200OK, new ResponseDto
+            {
+                Message = "Data Inserted",
+                Success = true,
+                Payload = null
+            });
+        }
 
         [HttpPost("UpdateAllDetails")]
         public async Task<ActionResult<ResponseDto>> UpdateAll([FromBody] Detail input)
